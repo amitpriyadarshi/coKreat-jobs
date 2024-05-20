@@ -39,7 +39,7 @@ class OwnershipTransferFunction (config: UserDeleteConfig, httpUtil: HttpUtil)
 
 
     if (event.isValid) {
-      logger.info("Processing event for ownership transfer operation from user having identifier : " + event.eData.get("fromUserProfile").asInstanceOf[Map[String, AnyRef]].get("userId") + " to user having identifier : " + event.eData.get("toUserProfile").asInstanceOf[Map[String, AnyRef]].get("userId"))
+      logger.info("Processing event for ownership transfer operation from user : " + event.eData.get("fromUserProfile") + " to user : " + event.eData.get("toUserProfile"))
       logger.debug("event edata : " + event.eData)
 
       val requestUrl = s"${config.programServiceBaseUrl}/program/v1/user/transfer"
