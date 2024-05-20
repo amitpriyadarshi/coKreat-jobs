@@ -4,10 +4,12 @@ import org.apache.flink.api.common.typeinfo.TypeInformation
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.ProcessFunction
 import org.slf4j.LoggerFactory
+import org.sunbird.job.exception.ServerException
 import org.sunbird.job.userdelete.domain.Event
 import org.sunbird.job.task.UserDeleteConfig
 import org.sunbird.job.util._
 import org.sunbird.job.{BaseProcessFunction, Metrics}
+
 import java.util
 
 class OwnershipTransferFunction (config: UserDeleteConfig, httpUtil: HttpUtil)
@@ -36,6 +38,39 @@ class OwnershipTransferFunction (config: UserDeleteConfig, httpUtil: HttpUtil)
     logger.info("OwnershipTransferFunction :: processElement :: Event :: " + event)
 
 
+    if (event.isValid) {
+      logger.info("Processing event for ownership transfer operation from user having identifier : " + event.eData.get("fromUserProfile").asInstanceOf[Map[String, AnyRef]].get("userId") + " to user having identifier : " + event.eData.get("toUserProfile").asInstanceOf[Map[String, AnyRef]].get("userId"))
+      logger.debug("event edata : " + event.eData)
+
+      val requestUrl = s"${config.programServiceBaseUrl}/program/v1/user/transfer"
+      logger.info("Ownership Transfer :: requestUrl: " + requestUrl)
+      val reqMap: Map[String, AnyRef] = Map("request"-> event)
+      logger.info("Ownership Transfer :: reqMap: " + JSONUtil.serialize(reqMap))
+      val httpResponse = httpUtil.post(requestUrl, JSONUtil.serialize(reqMap))
+
+      val response = JSONUtil.deserialize[Map[String, AnyRef]](httpResponse.body);
+      if (httpResponse.status == 200) {
+        val responseCode = response.getOrElse("responseCode", 0).asInstanceOf[String]
+        if (responseCode == "OK") {
+          logger.info("Ownership Transfer Event is triggered :: Success")
+        } else {
+          logger.error("Ownership Transfer Event is failed")
+        }
+      } else if (httpResponse.status != 500) {
+        val result = response.getOrElse("result", Map()).asInstanceOf[Map[String, AnyRef]]
+        logger.error("OwnershipTransfer :: failed with an error" + result);
+      }
+      else {
+        throw new ServerException("UserDelete:: ERR_API_CALL", "Invalid Response received while deleting user for : " + getErrorDetails(httpResponse))
+      }
+    }
     context.output(config.ownershipTransferOutTag, event)
+  }
+
+  private def getErrorDetails(httpResponse: HTTPResponse): String = {
+    logger.info("UserDelete:: getErrorDetails:: httpResponse.body:: " + httpResponse.body)
+    val response = JSONUtil.deserialize[Map[String, AnyRef]](httpResponse.body)
+    if (null != response) " | Response Code :" + httpResponse.status + " | Result : " + response.getOrElse("result", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]] + " | Error Message : " + response.getOrElse("params", Map[String, AnyRef]()).asInstanceOf[Map[String, AnyRef]]
+    else " | Null Response Received."
   }
 }
