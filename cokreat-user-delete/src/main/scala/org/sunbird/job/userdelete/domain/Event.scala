@@ -15,14 +15,6 @@ class Event(eventMap: java.util.Map[String, Any], partition: Int, offset: Long) 
 
 	def fromUserProfile: Map[String, AnyRef] = readOrDefault[Map[String, AnyRef]]("edata.fromUserProfile", Map.empty[String, AnyRef])
 	def toUserProfile: Map[String, AnyRef] = readOrDefault[Map[String, AnyRef]]("edata.toUserProfile", Map.empty[String, AnyRef])
-	def assetInformation: Map[String, AnyRef] = readOrDefault[Map[String, AnyRef]]("edata.assetInformation", Map.empty[String, AnyRef])
-	def fromUserId: String = readOrDefault[String]("edata.fromUserProfile.userId", "user")
-	def toUserId: String = readOrDefault[String]("edata.toUserProfile.userId", "user")
-
-
-	//def isValid(): Boolean = {
-	//	(StringUtils.equals("delete-user", action) && StringUtils.isNotBlank(userId));
-	//}
 
 	def isValid(): Boolean = {
 		validEventAction.contains(action) && StringUtils.equalsIgnoreCase("User", objType) && (action match {

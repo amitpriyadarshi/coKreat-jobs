@@ -30,8 +30,7 @@ class UserDeleteStreamTask(config: UserDeleteConfig, kafkaConnector: FlinkKafkaC
       .uid(config.UserDeleteFunction)
       .setParallelism(config.parallelism)
 
-    //val ownershipTransferSource = kafkaConnector.kafkaJobRequestSource[Event](config.ownershipTransferKafkaInputTopic)
-    val ownershipTransferSource = kafkaConnector.kafkaJobRequestSource[Event]("sunbirddev.user.ownership.transfer")
+    val ownershipTransferSource = kafkaConnector.kafkaJobRequestSource[Event](config.ownershipTransferKafkaInputTopic)
     val ownershipTransferStreamTask = env.addSource(ownershipTransferSource).name(config.ownershipTransferEventConsumer)
         .uid(config.ownershipTransferEventConsumer).setParallelism(config.kafkaConsumerParallelism)
         .rebalance
