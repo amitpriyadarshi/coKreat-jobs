@@ -38,15 +38,16 @@ class OwnershipTransferFunction (config: UserDeleteConfig, httpUtil: HttpUtil)
     logger.info("OwnershipTransferFunction :: processElement :: Event :: " + event)
 
 
-    if (event.isValid) {
+    if (event.isValid(logger)) {
       logger.info("Processing event for ownership transfer operation from user : " + event.eData.get("fromUserProfile") + " to user : " + event.eData.get("toUserProfile"))
 
       val requestUrl = s"${config.programServiceBaseUrl}/program/v1/user/transfer"
-      logger.info("Ownership Transfer :: requestUrl: " + requestUrl)
+      logger.debug("Ownership Transfer :: requestUrl: " + requestUrl)
       val reqMap: Map[String, AnyRef] = Map("request"-> event.map)
-      logger.info("Ownership Transfer :: serialize :: reqMap: " + JSONUtil.serialize(reqMap))
+      logger.debug("Ownership Transfer :: serialize :: reqMap: " + JSONUtil.serialize(reqMap))
       val httpResponse = httpUtil.post(requestUrl, JSONUtil.serialize(reqMap))
 
+      logger.info("Ownership Transfer api response :: " + httpResponse.body)
       val response = JSONUtil.deserialize[Map[String, AnyRef]](httpResponse.body);
       if (httpResponse.status == 200) {
         val responseCode = response.getOrElse("responseCode", 0).asInstanceOf[String]
